@@ -20,7 +20,8 @@
     "declarativeContent",
     "http://localhost/*",
     "tabs",
-    "contextMenus"
+    "contextMenus",
+    "storage"
   ],
   "options_ui": {
     "page": "options.html"
@@ -31,7 +32,7 @@
       "19": "icons/icon-19.png",
       "38": "icons/icon-38.png"
     },
-    "default_title": "__MSG_pageActionTitle__"
+    "default_title": "__MSG_titleOnAction__"
   }
 }
 

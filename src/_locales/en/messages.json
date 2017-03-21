@@ -11,8 +11,12 @@
     "message": "Open youtube videos and others on a floating video panel",
     "description": "The description of the application"
   },
-   "pageActionTitle": {
+   "titleOnAction": {
     "message": "Float video..",
     "description": "Title for pageAction and context menu title "
+  },
+   "noServerError": {
+    "message": "Companion app is not running or maybe it's not installed.. \n\n Install companion app?",
+    "description": "Error for when extension doesn't find local server"
   }
 }
