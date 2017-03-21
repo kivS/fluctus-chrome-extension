@@ -82,7 +82,7 @@ ext.pageAction.onClicked.addListener( tab => {
 	console.debug('page_action clicked..', tab);
 	
 	// pause current video
-	ext.tabs.executeScript(null, {file: "actions_on_videos.js"});
+	ext.tabs.executeScript(null, {file: "scripts/actions_on_videos.js"});
 
 	current_tab = tab;
 	
