@@ -6,14 +6,14 @@
     "chrome-build": "TARGET=chrome gulp",
     "opera-build": "TARGET=opera gulp",
     "firefox-build": "TARGET=firefox gulp",
-    "build": "NODE_ENV=production npm run chrome-build && NODE_ENV=production  npm run opera-build && NODE_ENV=production  npm run firefox-build",
+    "build": "NODE_ENV=production yarn run chrome-build && NODE_ENV=production  yarn run opera-build && NODE_ENV=production  yarn run firefox-build",
     "chrome-watch": "TARGET=chrome gulp watch",
     "opera-watch": "TARGET=opera gulp watch",
     "firefox-watch": "TARGET=firefox gulp watch",
     "chrome-dist": "NODE_ENV=production TARGET=chrome gulp dist",
     "opera-dist": "NODE_ENV=production TARGET=opera gulp dist",
     "firefox-dist": "NODE_ENV=production TARGET=firefox gulp dist",
-    "dist": "npm run chrome-dist && npm run opera-dist && npm run firefox-dist"
+    "dist": "yarn run chrome-dist && yarn run opera-dist && yarn run firefox-dist"
   },
   "repository": {
     "type": "git",
