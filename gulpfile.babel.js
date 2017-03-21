@@ -137,7 +137,7 @@ function buildJS(target) {
     })
     .transform('babelify', { presets: ['es2015'] })
     .transform(preprocessify, {
-      includeExtensions: ['.js'],
+      
       context: context
     })
     .bundle()
