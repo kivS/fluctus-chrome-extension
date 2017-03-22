@@ -103,9 +103,8 @@ ext.pageAction.onClicked.addListener( tab => {
 ext.contextMenus.onClicked.addListener((object_info, tab) =>{
 	console.debug('Context Menu cliked: ', object_info);
 
-	/*// parser for url
-	let parser = document.createElement('a');
-	parser.href = decodeURIComponent(object_info.linkUrl || object_info.selectionText);
+	// parser for url
+	let parser = parseUrl(object_info.linkUrl || object_info.selectionText);
 
 	// get 'cleaned' url
 	let cleaned_url = getCleanedUrl(parser.href);
@@ -117,8 +116,12 @@ ext.contextMenus.onClicked.addListener((object_info, tab) =>{
 		// Open video request
 		openVideoRequest(cleaned_url);
 	}
-*/
+
+	
+
 });
+
+
 
 
 
@@ -278,4 +281,103 @@ function showNoServerErrorMsg(){
 	if(confirm(ext.i18n.getMessage("noServerError"))){
 		ext.tabs.create({ url: config.NATIVE_APP_INSTALL_URL });
 	}
+}
+
+
+/**
+ * Checks if url is allowed and cleans dirty url(like those from a google search) if there's a need for it
+ * @param  {[string]} dirty_url --> Presumable dirty link
+ * @return {[string || null]}   --> clean url or if it's not allowed null
+ */
+function getCleanedUrl(dirty_url){
+	console.log('Url :', dirty_url);
+
+	// url object
+	let parsed_dirty_url = parseUrl(dirty_url);
+
+	if(isHostnameSupported(parsed_dirty_url.hostname)){
+		console.log(`Hostname: ${parsed_dirty_url.hostname} is supported!`);
+		// If dirty_url is already supported lets return it
+		return dirty_url;
+
+	}else{
+		console.log(`Hostname: ${parsed_dirty_url.hostname} is not supported.. let\s try to retrieve clean  url from it`);
+
+		// Get clean url if its hostname is supported
+		let clean_url;
+
+		try{
+
+			clean_url = getSupportedUrlFromDirtyUrl(parsed_dirty_url.search);
+			
+			// Eat my own tail 
+			return getCleanedUrl(clean_url);
+
+		}catch(e){
+			alert(ext.i18n.getMessage("urlNotSupportedError"));
+		}
+	}
+	
+}
+
+
+/**
+ * Parses url and returns object with url's various components
+ * @param  {[string]} url 
+ * @return {[object]}     -> Url object
+ */
+function parseUrl(url){
+	let parser = document.createElement('a');
+	parser.href = decodeURIComponent(url);
+
+	return parser;
+}
+
+
+/**
+ * Checks if hostname is supported by the program
+ * @param  {[string]}  hostname 
+ * @return {Boolean}
+ */
+function isHostnameSupported(hostname){
+	let isIt = null;
+
+	// for each supported hostname config check if it's present in hostname -> (*.host.*) == "www.host.com"
+	isIt = config.SUPPORTED_HOSTNAMES.filter(host => RegExp(`.*\\.${host}\\..*`).test(hostname) == true);
+
+
+	if(isIt != false){
+		return true;
+	}
+
+	// default
+	return false;
+}
+
+/**
+ * Retrieves supported url from dirty url search param
+ * @param  {[string]} url_search --> url search object of dirty url
+ * @return {[string]}    --> supported Url
+ */
+function getSupportedUrlFromDirtyUrl(url_search){
+	console.log('Dirty url\'s search object: ', url_search);
+
+	let result = null;
+
+	// For each hostname in supported array let's match against url_search and retrieve the url
+	config.SUPPORTED_HOSTNAMES.forEach(host =>{
+
+		let match_exp = RegExp(`https:\\/\\/(www)?\\.${host}\\..+`,'g');
+		console.log('Match RegExp: ', match_exp);
+
+		let matched_val = url_search.match(match_exp);
+		console.log('Match result: ', matched_val);
+
+		if(matched_val) return result = matched_val[0];
+	
+	});	
+
+	if(!result) throw `No match for dirty url: ${url_search}`;
+
+	return result;
 }
