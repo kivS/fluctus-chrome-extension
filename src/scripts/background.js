@@ -41,7 +41,7 @@ ext.runtime.onInstalled.addListener(() =>{
 			`https://*/*${encodeURIComponent('www.youtube.com/watch')}*`
 		]
 	});
-	
+
 
 });
 
@@ -61,7 +61,7 @@ let current_tab = null;
 storage.get(config.STORAGE_KEY_NATIVE_APP_PORT, result =>{
 
 	// get port
-	let NATIVE_APP_PORT = result[config.STORAGE_KEY_NATIVE_APP_PORT];
+	NATIVE_APP_PORT = result[config.STORAGE_KEY_NATIVE_APP_PORT];
 
 	if(!NATIVE_APP_PORT){
 		// Set last value of supported ports array as default
@@ -80,12 +80,12 @@ storage.get(config.STORAGE_KEY_NATIVE_APP_PORT, result =>{
 // Page_action click event
 ext.pageAction.onClicked.addListener( tab => {
 	console.debug('page_action clicked..', tab);
-	
+
 	// pause current video
 	ext.tabs.executeScript(null, {file: "scripts/actions_on_videos.js"});
 
 	current_tab = tab;
-	
+
 	if(NATIVE_APP_PORT){
 		// Send POST request to open video
 		openVideoRequest(tab.url);
@@ -117,7 +117,7 @@ ext.contextMenus.onClicked.addListener((object_info, tab) =>{
 		openVideoRequest(cleaned_url);
 	}
 
-	
+
 
 });
 
@@ -126,13 +126,13 @@ ext.contextMenus.onClicked.addListener((object_info, tab) =>{
 
 
 //*****************************************************
-//			   Native app functions						   
-//									  				   				
+//			   Native app functions
+//
 //*****************************************************
 /**
  * Send request to native app to open video panel
- * @param  {[string]} url 
- * @return {[type]}     
+ * @param  {[string]} url
+ * @return {[type]}
  */
 function openVideoRequest(url){
 
@@ -140,7 +140,7 @@ function openVideoRequest(url){
 	let port = NATIVE_APP_PORT;
 
 	payload.video_url = url;
-	
+
 	// Get video type
 	payload.video_type = getVideoType(url);
 
@@ -163,7 +163,7 @@ function openVideoRequest(url){
 		// If request fails let's reset default native app port, that way we'll have to ping for new port
 		NATIVE_APP_PORT = null;
 		setNativeAppPortToStorage("");
-		
+
 		// Ping server again
 		console.log('Trying to connect again...');
 		pingNativeAppServer(current_tab.url);
@@ -176,7 +176,7 @@ function openVideoRequest(url){
 
 /**
  * Ping native app server
- * 
+ *
  */
 function pingNativeAppServer(){
 
@@ -184,7 +184,7 @@ function pingNativeAppServer(){
 		return [`http://localhost:${port}/ping`, port];
 	})
 
-	Promise.all(ping_urls.map(url => 
+	Promise.all(ping_urls.map(url =>
 			fetch(url[0])
 				.then(response =>{
 					if(response.ok){
@@ -209,7 +209,7 @@ function pingNativeAppServer(){
 
 				// Send POST request to open video
 				openVideoRequest(current_tab.url);
-				
+
 			}else{
 				// No server found
 				showNoServerErrorMsg();
@@ -223,8 +223,8 @@ function pingNativeAppServer(){
 
 
 
-//			   Helper functions						   
-//									  				   				
+//			   Helper functions
+//
 //*****************************************************
 
 
@@ -236,15 +236,15 @@ function setNativeAppPortToStorage(port){
 	const objToStore = {};
 
 	objToStore[config.STORAGE_KEY_NATIVE_APP_PORT] = port;
-	
+
 	storage.set(objToStore);
-	
+
 }
 
 
 /**
  * Will go over supported hostnames array and get the value corresponding to the url
- * @param  {[type]} url 
+ * @param  {[type]} url
  * @return {[string]}     --> Type of video
  */
 function getVideoType(url){
@@ -275,7 +275,7 @@ function getVideoType(url){
 /**
  * Shows dialog to user if server is not alive
  * and lets link to download page for the native app
- * 
+ *
  */
 function showNoServerErrorMsg(){
 	if(confirm(ext.i18n.getMessage("noServerError"))){
@@ -309,21 +309,21 @@ function getCleanedUrl(dirty_url){
 		try{
 
 			clean_url = getSupportedUrlFromDirtyUrl(parsed_dirty_url.search);
-			
-			// Eat my own tail 
+
+			// Eat my own tail
 			return getCleanedUrl(clean_url);
 
 		}catch(e){
 			alert(ext.i18n.getMessage("urlNotSupportedError"));
 		}
 	}
-	
+
 }
 
 
 /**
  * Parses url and returns object with url's various components
- * @param  {[string]} url 
+ * @param  {[string]} url
  * @return {[object]}     -> Url object
  */
 function parseUrl(url){
@@ -336,7 +336,7 @@ function parseUrl(url){
 
 /**
  * Checks if hostname is supported by the program
- * @param  {[string]}  hostname 
+ * @param  {[string]}  hostname
  * @return {Boolean}
  */
 function isHostnameSupported(hostname){
@@ -374,8 +374,8 @@ function getSupportedUrlFromDirtyUrl(url_search){
 		console.log('Match result: ', matched_val);
 
 		if(matched_val) return result = matched_val[0];
-	
-	});	
+
+	});
 
 	if(!result) throw `No match for dirty url: ${url_search}`;
 
