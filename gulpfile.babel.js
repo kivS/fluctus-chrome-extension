@@ -126,7 +126,6 @@ function mergeAll(dest) {
 function buildJS(target) {
   const files = [
     'background.js',
-    'actions_on_videos.js',
     'options.js',
     'livereload.js'
   ]
@@ -138,7 +137,7 @@ function buildJS(target) {
     })
     .transform('babelify', { presets: ['es2015'] })
     .transform(preprocessify, {
-      
+
       context: context
     })
     .bundle()
@@ -146,11 +145,11 @@ function buildJS(target) {
     .pipe(buffer())
     .pipe(gulpif(!production, $.sourcemaps.init({ loadMaps: true }) ))
     .pipe(gulpif(!production, $.sourcemaps.write('./') ))
-    .pipe(gulpif(production, $.uglify({ 
+    .pipe(gulpif(production, $.uglify({
       "mangle": false,
       "output": {
         "ascii_only": true
-      } 
+      }
     })))
     .pipe(gulp.dest(`build/${target}/scripts`));
   });
