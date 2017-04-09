@@ -57,6 +57,7 @@ const config = {
 let NATIVE_APP_PORT = null;
 let current_tab = null;
 
+
 // get native app default port from storage if not get default one from config
 storage.get(config.STORAGE_KEY_NATIVE_APP_PORT, result =>{
 
@@ -82,19 +83,30 @@ ext.pageAction.onClicked.addListener( tab => {
 	console.debug('page_action clicked..', tab);
 
 	// pause current video
-	ext.tabs.executeScript(null, {file: "scripts/actions_on_videos.js"});
+	ext.tabs.executeScript(null, {code: "document.getElementsByTagName('video')[0].pause()"});
 
-	current_tab = tab;
+	// get current video time
+	new Promise((resolve) => {
+		ext.tabs.executeScript(null, {code: "document.getElementsByTagName('video')[0].currentTime"}, result =>{
+			resolve(result[0]);
+		});
 
-	if(NATIVE_APP_PORT){
-		// Send POST request to open video
-		openVideoRequest(tab.url);
+	}).then(currentTime =>{
+			console.debug('current video time: ', currentTime);
 
-	}else{
-		// PING NATIVE APP
-		pingNativeAppServer();
+			current_tab = tab;
 
-	}
+			if(NATIVE_APP_PORT){
+				// Send POST request to open video with current video time
+				openVideoRequest(tab.url, currentTime);
+
+			}else{
+				// PING NATIVE APP
+				pingNativeAppServer();
+
+			}
+
+	})
 
 });
 
@@ -132,9 +144,10 @@ ext.contextMenus.onClicked.addListener((object_info, tab) =>{
 /**
  * Send request to native app to open video panel
  * @param  {[string]} url
+ * @param  {[string]} current video time
  * @return {[type]}
  */
-function openVideoRequest(url){
+function openVideoRequest(url, currentTime = false){
 
 	let payload = {};
 	let port = NATIVE_APP_PORT;
@@ -143,6 +156,9 @@ function openVideoRequest(url){
 
 	// Get video type
 	payload.video_type = getVideoType(url);
+
+	// get video current time
+	if(currentTime) payload.video_currentTime = currentTime;
 
 	console.log('Payload to send: ', payload);
 
