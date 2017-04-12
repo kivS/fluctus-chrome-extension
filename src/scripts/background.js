@@ -38,7 +38,12 @@ ext.runtime.onInstalled.addListener(() =>{
 			// For clean urls links like in youtube page and etc
 			'https://www.youtube.com/watch*',
 			// For dirty urls like in google search results..dirty..
-			`https://*/*${encodeURIComponent('www.youtube.com/watch')}*`
+			`https://*/*${encodeURIComponent('www.youtube.com/watch')}*`,
+
+			// VIMEO
+			'https://vimeo.com/*',
+			// For dirty urls like in google search results..dirty..
+			`https://*/*${encodeURIComponent('vimeo.com')}*`,
 		]
 	});
 
