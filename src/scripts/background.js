@@ -15,6 +15,11 @@ ext.runtime.onInstalled.addListener(() =>{
 		 		conditions: [
 		 			new chrome.declarativeContent.PageStateMatcher({
 		 				pageUrl: { hostContains: 'youtube',  pathContains: 'watch' }
+		 			}),
+
+					// Vimeo Tigger me!!
+					new chrome.declarativeContent.PageStateMatcher({
+		 				pageUrl: { hostContains: 'vimeo' }
 		 			})
 		 		],
 
@@ -43,7 +48,7 @@ ext.runtime.onInstalled.addListener(() =>{
 			// VIMEO
 			'https://vimeo.com/*',
 			// For dirty urls like in google search results..dirty..
-			`https://*/*${encodeURIComponent('vimeo.com')}*`,
+			`https://*/*${encodeURIComponent('vimeo')}*`,
 		]
 	});
 
