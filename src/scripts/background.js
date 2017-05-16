@@ -1,7 +1,7 @@
 import ext from "./utils/ext";
 import storage from "./utils/storage";
 
-console.log('Lift off of the Background!');
+console.log('Lift off of the Background!!');
 
 // On install or upgrade
 ext.runtime.onInstalled.addListener(() =>{

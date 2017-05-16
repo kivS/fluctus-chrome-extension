@@ -128,9 +128,10 @@ function mergeAll(dest) {
 function buildJS(target) {
   const files = [
     'background.js',
-    'options.js',
-    'livereload.js'
+    'options.js'
   ]
+
+  if (!production) files.push('livereload.js');
 
   let tasks = files.map( file => {
     return browserify({
