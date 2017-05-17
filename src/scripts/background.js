@@ -19,7 +19,8 @@ ext.runtime.onInstalled.addListener(() =>{
 
 					// Vimeo Tigger me!!
 					new chrome.declarativeContent.PageStateMatcher({
-		 				pageUrl: { hostContains: 'vimeo' }
+		 				pageUrl: { hostContains: 'vimeo' },
+		 				css: ['video']
 		 			})
 		 		],
 
