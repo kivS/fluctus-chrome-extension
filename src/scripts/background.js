@@ -47,7 +47,7 @@ ext.runtime.onInstalled.addListener(() =>{
 			`https://*/*${encodeURIComponent('www.youtube.com/watch')}*`,
 
 			// VIMEO
-			'https://vimeo.com/*',
+			'https://*.vimeo.com/*',
 			// For dirty urls like in google search results..dirty..
 			`https://*/*${encodeURIComponent('vimeo')}*`,
 		]
@@ -60,7 +60,7 @@ ext.runtime.onInstalled.addListener(() =>{
 // Define config constant
 const config = {
 	SUPPORTED_PORTS: [8791,8238,8753],
-	SUPPORTED_HOSTNAMES: ['youtube', 'potato'],
+	SUPPORTED_HOSTNAMES: ['youtube', 'vimeo'],
 	NATIVE_APP_INSTALL_URL: 'https://vikborges.com',
 	STORAGE_KEY_NATIVE_APP_PORT : 'fd_native_app_port',
 }
@@ -275,18 +275,18 @@ function setNativeAppPortToStorage(port){
  * @return {[string]}     --> Type of video
  */
 function getVideoType(url){
-	console.log('Get video type of: ', url);
+	console.debug('Get video type of: ', url);
 	let result;
 
 	// Go over supported hostnames
 	config.SUPPORTED_HOSTNAMES.forEach(host =>{
 		// build reg rexp to match host in url
-		let match_exp = RegExp(`https:\\/\\/(www)?\\.${host}\\..+`,'g');
-		console.log('Match RegExp: ', match_exp);
+		let match_exp = RegExp(`https:\\/\\/(www)?\\.?${host}\\..+`,'g');
+		console.debug('Match RegExp: ', match_exp);
 
 		// execute it
 		let matched_val = url.match(match_exp);
-		console.log('Match result: ', matched_val);
+		console.debug('Match result: ', matched_val);
 
 		if(matched_val) return result = host;
 	});
@@ -370,7 +370,7 @@ function isHostnameSupported(hostname){
 	let isIt = null;
 
 	// for each supported hostname config check if it's present in hostname -> (*.host.*) == "www.host.com"
-	isIt = config.SUPPORTED_HOSTNAMES.filter(host => RegExp(`.*\\.${host}\\..*`).test(hostname) == true);
+	isIt = config.SUPPORTED_HOSTNAMES.filter(host => RegExp(`.*\\.?${host}\\..*`).test(hostname) == true);
 
 
 	if(isIt != false){
@@ -394,7 +394,7 @@ function getSupportedUrlFromDirtyUrl(url_search){
 	// For each hostname in supported array let's match against url_search and retrieve the url
 	config.SUPPORTED_HOSTNAMES.forEach(host =>{
 
-		let match_exp = RegExp(`https:\\/\\/(www)?\\.${host}\\..+`,'g');
+		let match_exp = RegExp(`https:\\/\\/(www)?\\.?${host}\\..+`,'g');
 		console.log('Match RegExp: ', match_exp);
 
 		let matched_val = url_search.match(match_exp);
