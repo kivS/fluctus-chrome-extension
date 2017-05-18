@@ -372,13 +372,7 @@ function isHostnameSupported(hostname){
 	// for each supported hostname config check if it's present in hostname -> (*.host.*) == "www.host.com"
 	isIt = config.SUPPORTED_HOSTNAMES.filter(host => RegExp(`.*\\.?${host}\\..*`).test(hostname) == true);
 
-
-	if(isIt != false){
-		return true;
-	}
-
-	// default
-	return false;
+	return isIt != false;
 }
 
 /**
