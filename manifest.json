@@ -23,9 +23,6 @@
     "contextMenus",
     "storage"
   ],
-  "options_ui": {
-    "page": "options.html"
-  },
 
   "page_action": {
     "default_icon": {

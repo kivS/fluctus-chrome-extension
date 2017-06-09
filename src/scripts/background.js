@@ -61,7 +61,7 @@ ext.runtime.onInstalled.addListener(() =>{
 const config = {
 	SUPPORTED_PORTS: [8791,8238,8753],
 	SUPPORTED_HOSTNAMES: ['youtube', 'vimeo'],
-	NATIVE_APP_INSTALL_URL: 'https://vikborges.com',
+	NATIVE_APP_INSTALL_URL: 'https://github.com/kivS/Fluctus/releases',
 	STORAGE_KEY_NATIVE_APP_PORT : 'fd_native_app_port',
 }
 
