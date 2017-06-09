@@ -1,5 +1,5 @@
 {
-  "name": "extenstion-boilerplate",
+  "name": "extension-boilerplate",
   "version": "0.0.2",
   "description": "A template for creating cross-browser extensions",
   "scripts": {
@@ -7,9 +7,9 @@
     "opera-build": "TARGET=opera gulp",
     "firefox-build": "TARGET=firefox gulp",
     "build": "NODE_ENV=production yarn run chrome-build && NODE_ENV=production  yarn run opera-build && NODE_ENV=production  yarn run firefox-build",
-    "chrome-watch": "TARGET=chrome gulp watch",
-    "opera-watch": "TARGET=opera gulp watch",
-    "firefox-watch": "TARGET=firefox gulp watch",
+    "chrome-w": "TARGET=chrome gulp watch",
+    "opera-w": "TARGET=opera gulp watch",
+    "firefox-w": "TARGET=firefox gulp watch",
     "chrome-dist": "NODE_ENV=production TARGET=chrome gulp dist",
     "opera-dist": "NODE_ENV=production TARGET=opera gulp dist",
     "firefox-dist": "NODE_ENV=production TARGET=firefox gulp dist",
