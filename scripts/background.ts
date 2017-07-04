@@ -1,24 +1,20 @@
-import ext from "./utils/ext";
-import storage from "./utils/storage";
-
 console.log('Lift off of the Background!!');
 
 // On install or upgrade
-ext.runtime.onInstalled.addListener(() =>{
-	// @if extension = 'chrome'
+chrome.runtime.onInstalled.addListener(() =>{
 	// Replace all rules for filtering page depending on content
-	chrome.declarativeContent.onPageChanged.removeRules(undefined, () => {
+	chrome['declarativeContent'].onPageChanged.removeRules(undefined, () => {
 		// With a new rule
-		chrome.declarativeContent.onPageChanged.addRules([
+		chrome['declarativeContent'].onPageChanged.addRules([
 		 	{
 		 		// Youtube Trigger me!!
 		 		conditions: [
-		 			new chrome.declarativeContent.PageStateMatcher({
+		 			new chrome['declarativeContent'].PageStateMatcher({
 		 				pageUrl: { hostContains: 'youtube',  pathContains: 'watch' }
 		 			}),
 
 					// Vimeo Tigger me!!
-					new chrome.declarativeContent.PageStateMatcher({
+					new chrome['declarativeContent'].PageStateMatcher({
 		 				pageUrl: { hostContains: 'vimeo' },
 		 				css: ['video']
 		 			})
@@ -26,18 +22,17 @@ ext.runtime.onInstalled.addListener(() =>{
 
 		 		// Shows the page_action
 		 		actions: [
-		 			new chrome.declarativeContent.ShowPageAction()
+		 			new chrome['declarativeContent'].ShowPageAction()
 
 		 		]
 		 	}
 		]);
 	});
-	// @endif
 
 	// Add contextMenus
-	ext.contextMenus.create({
+	chrome.contextMenus.create({
 		id: 'contextMenu_1',
-		title: ext.i18n.getMessage("titleOnAction"),
+		title: chrome.i18n.getMessage("titleOnAction"),
 		contexts: ['link', 'selection'],
 		targetUrlPatterns: [
 			// YOUTUBE
@@ -68,9 +63,8 @@ const config = {
 let NATIVE_APP_PORT = null;
 let current_tab = null;
 
-
 // get native app default port from storage if not get default one from config
-storage.get(config.STORAGE_KEY_NATIVE_APP_PORT, result =>{
+chrome.storage.sync.get(config.STORAGE_KEY_NATIVE_APP_PORT, result =>{
 
 	// get port
 	NATIVE_APP_PORT = result[config.STORAGE_KEY_NATIVE_APP_PORT];
@@ -90,16 +84,16 @@ storage.get(config.STORAGE_KEY_NATIVE_APP_PORT, result =>{
 
 
 // Page_action click event
-ext.pageAction.onClicked.addListener( tab => {
+chrome.pageAction.onClicked.addListener( tab => {
 	console.debug('page_action clicked..', tab);
 
 	// pause current video
-	ext.tabs.executeScript(null, {code: "document.getElementsByTagName('video')[0].pause()"});
+	chrome.tabs.executeScript(null, {code: "document.getElementsByTagName('video')[0].pause()"});
 
 	// get current video time
 	new Promise((resolve) => {
-		ext.tabs.executeScript(null, {code: "document.getElementsByTagName('video')[0].currentTime"}, result =>{
-			resolve(result[0]);
+		chrome.tabs.executeScript(null, {code: "document.getElementsByTagName('video')[0].currentTime"}, result =>{
+			resolve(parseInt(result[0]));
 		});
 
 	}).then(currentTime =>{
@@ -123,7 +117,7 @@ ext.pageAction.onClicked.addListener( tab => {
 
 
 // on context menu click
-ext.contextMenus.onClicked.addListener((object_info, tab) =>{
+chrome.contextMenus.onClicked.addListener((object_info, tab) =>{
 	console.debug('Context Menu cliked: ', object_info);
 
 	// parser for url
@@ -158,18 +152,18 @@ ext.contextMenus.onClicked.addListener((object_info, tab) =>{
  * @param  {[string]} current video time
  * @return {[type]}
  */
-function openVideoRequest(url, currentTime = false){
+function openVideoRequest(url, currentTime?){
 
 	let payload = {};
 	let port = NATIVE_APP_PORT;
 
-	payload.video_url = url;
+	payload['video_url'] = url;
 
 	// Get video type
-	payload.video_type = getVideoType(url);
+	payload['video_type'] = getVideoType(url);
 
 	// get video current time
-	if(currentTime) payload.video_currentTime = currentTime;
+	if(currentTime) payload['video_currentTime'] = currentTime;
 
 	console.log('Payload to send: ', payload);
 
@@ -193,7 +187,7 @@ function openVideoRequest(url, currentTime = false){
 
 		// Ping server again
 		console.log('Trying to connect again...');
-		pingNativeAppServer(current_tab.url);
+		pingNativeAppServer();
 
 	});
 
@@ -212,7 +206,7 @@ function pingNativeAppServer(){
 	})
 
 	Promise.all(ping_urls.map(url =>
-			fetch(url[0])
+			fetch(url[0].toString())
 				.then(response =>{
 					if(response.ok){
 						// If server is found let's return the port
@@ -264,7 +258,7 @@ function setNativeAppPortToStorage(port){
 
 	objToStore[config.STORAGE_KEY_NATIVE_APP_PORT] = port;
 
-	storage.set(objToStore);
+	chrome.storage.sync.set(objToStore);
 
 }
 
@@ -305,8 +299,8 @@ function getVideoType(url){
  *
  */
 function showNoServerErrorMsg(){
-	if(confirm(ext.i18n.getMessage("noServerError"))){
-		ext.tabs.create({ url: config.NATIVE_APP_INSTALL_URL });
+	if(confirm(chrome.i18n.getMessage("noServerError"))){
+		chrome.tabs.create({ url: config.NATIVE_APP_INSTALL_URL });
 	}
 }
 
@@ -341,7 +335,7 @@ function getCleanedUrl(dirty_url){
 			return getCleanedUrl(clean_url);
 
 		}catch(e){
-			alert(ext.i18n.getMessage("urlNotSupportedError"));
+			alert(chrome.i18n.getMessage("urlNotSupportedError"));
 		}
 	}
 
