@@ -17,6 +17,12 @@ chrome.runtime.onInstalled.addListener(() =>{
 					new chrome['declarativeContent'].PageStateMatcher({
 		 				pageUrl: { hostContains: 'vimeo' },
 		 				css: ['video']
+		 			}),
+
+	 				// soundcloud Tigger me!!
+					new chrome['declarativeContent'].PageStateMatcher({
+		 				pageUrl: { hostContains: 'soundcloud' },
+		 				css: ['div.waveform__scene']
 		 			})
 		 		],
 
@@ -45,6 +51,11 @@ chrome.runtime.onInstalled.addListener(() =>{
 			'https://*.vimeo.com/*',
 			// For dirty urls like in google search results..dirty..
 			`https://*/*${encodeURIComponent('vimeo')}*`,
+
+			// SOUNDCLOUD
+			'https://*.soundcloud.com/*',
+			// For dirty urls like in google search results..dirty..
+			`https://*/*${encodeURIComponent('soundcloud')}*`,
 		]
 	});
 
@@ -55,7 +66,7 @@ chrome.runtime.onInstalled.addListener(() =>{
 // Define config constant
 const config = {
 	SUPPORTED_PORTS: [8791,8238,8753],
-	SUPPORTED_HOSTNAMES: ['youtube', 'vimeo'],
+	SUPPORTED_HOSTNAMES: ['youtube', 'vimeo', 'soundcloud'],
 	NATIVE_APP_INSTALL_URL: 'https://github.com/kivS/Fluctus/releases',
 	STORAGE_KEY_NATIVE_APP_PORT : 'fd_native_app_port',
 }
