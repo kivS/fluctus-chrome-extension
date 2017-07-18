@@ -9,6 +9,7 @@ chrome.runtime.onInstalled.addListener(() =>{
 		 	{
 		 		// Youtube Trigger me!!
 		 		conditions: [
+		 			// Youtube Tigger me!!
 		 			new chrome['declarativeContent'].PageStateMatcher({
 		 				pageUrl: { hostContains: 'youtube',  pathContains: 'watch' }
 		 			}),
@@ -23,6 +24,13 @@ chrome.runtime.onInstalled.addListener(() =>{
 					new chrome['declarativeContent'].PageStateMatcher({
 		 				pageUrl: { hostContains: 'soundcloud' },
 		 				css: ['div.waveform__scene']
+		 			}),
+
+		 			// Twitch Tigger me!!
+					new chrome['declarativeContent'].PageStateMatcher({
+		 				pageUrl: { hostContains: 'twitch' },
+		 				css: ['.cn-bar__displayname']
+		 				
 		 			})
 		 		],
 
@@ -56,6 +64,11 @@ chrome.runtime.onInstalled.addListener(() =>{
 			'https://*.soundcloud.com/*',
 			// For dirty urls like in google search results..dirty..
 			`https://*/*${encodeURIComponent('soundcloud')}*`,
+
+			// TWITCH
+			'https://*.twitch.tv/*',
+			// For dirty urls like in google search results..dirty..
+			`https://*/*${encodeURIComponent('twitch')}*`,
 		]
 	});
 
@@ -66,7 +79,7 @@ chrome.runtime.onInstalled.addListener(() =>{
 // Define config constant
 const config = {
 	SUPPORTED_PORTS: [8791,8238,8753],
-	SUPPORTED_HOSTNAMES: ['youtube', 'vimeo', 'soundcloud'],
+	SUPPORTED_HOSTNAMES: ['youtube', 'vimeo', 'soundcloud','twitch'],
 	NATIVE_APP_INSTALL_URL: 'https://github.com/kivS/Fluctus/releases',
 	STORAGE_KEY_NATIVE_APP_PORT : 'fd_native_app_port',
 }
