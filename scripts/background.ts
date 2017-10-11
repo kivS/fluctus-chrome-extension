@@ -1,5 +1,33 @@
 console.log('Lift off of the Background!!');
 
+// Define config constant
+const config = {
+	SUPPORTED_PORTS: [8791,8238,8753],
+	SUPPORTED_HOSTNAMES:[
+		{
+			'name': 'youtube',
+			'alts': ['youtube', 'youtu.be']
+		},
+		{
+			'name': 'vimeo',
+			'alts': ['vimeo']
+		},
+		{
+			'name': 'soundcloud',
+			'alts': ['soundcloud']
+		},
+		{
+			'name': 'twitch',
+			'alts': ['twitch', 'go.twitch']
+		},
+	],
+	NATIVE_APP_INSTALL_URL: 'https://github.com/kivS/Fluctus/releases',
+	STORAGE_KEY_NATIVE_APP_PORT : 'fd_native_app_port',
+}
+
+let NATIVE_APP_PORT = null;
+let current_tab = null;
+
 // On install or upgrade
 chrome.runtime.onInstalled.addListener(() =>{
 	// Replace all rules for filtering page depending on content
@@ -9,27 +37,30 @@ chrome.runtime.onInstalled.addListener(() =>{
 		 	{
 		 		// Youtube Trigger me!!
 		 		conditions: [
-		 			// Youtube Tigger me!!
+		 			// Youtube Trigger me!!
 		 			new chrome['declarativeContent'].PageStateMatcher({
 		 				pageUrl: { hostContains: 'youtube',  pathContains: 'watch' }
 		 			}),
 
-					// Vimeo Tigger me!!
+					// Vimeo Trigger me!!
 					new chrome['declarativeContent'].PageStateMatcher({
 		 				pageUrl: { hostContains: 'vimeo' },
 		 				css: ['video']
 		 			}),
 
-	 				// soundcloud Tigger me!!
+	 				// soundcloud Trigger me!!
 					new chrome['declarativeContent'].PageStateMatcher({
 		 				pageUrl: { hostContains: 'soundcloud' },
 		 				css: ['div.waveform__scene']
 		 			}),
 
-		 			// Twitch Tigger me!!
+		 			// Twitch Trigger me!!
 					new chrome['declarativeContent'].PageStateMatcher({
-		 				pageUrl: { hostContains: 'twitch' },
-		 				css: ['.cn-bar__displayname']
+		 				pageUrl: { urlMatches: 'https://go.twitch.tv/[a-zA-Z0-9_]{4,25}$' },
+		 				
+		 			}),
+		 			new chrome['declarativeContent'].PageStateMatcher({
+		 				pageUrl: { urlMatches: 'https://go.twitch.tv/videos/\\d+$' },
 		 				
 		 			})
 		 		],
@@ -76,16 +107,6 @@ chrome.runtime.onInstalled.addListener(() =>{
 });
 
 
-// Define config constant
-const config = {
-	SUPPORTED_PORTS: [8791,8238,8753],
-	SUPPORTED_HOSTNAMES: ['youtube', 'vimeo', 'soundcloud','twitch'],
-	NATIVE_APP_INSTALL_URL: 'https://github.com/kivS/Fluctus/releases',
-	STORAGE_KEY_NATIVE_APP_PORT : 'fd_native_app_port',
-}
-
-let NATIVE_APP_PORT = null;
-let current_tab = null;
 
 // get native app default port from storage if not get default one from config
 chrome.storage.sync.get(config.STORAGE_KEY_NATIVE_APP_PORT, result =>{
@@ -107,7 +128,13 @@ chrome.storage.sync.get(config.STORAGE_KEY_NATIVE_APP_PORT, result =>{
 
 
 
-// Page_action click event
+/**
+ * On btn press lets: 
+ * - stop the video, 
+ * - get current video ellapsed time, 
+ * - get the current url tab 
+ * - make a openVideo request 
+ */
 chrome.pageAction.onClicked.addListener( tab => {
 	console.debug('page_action clicked..', tab);
 
@@ -140,7 +167,11 @@ chrome.pageAction.onClicked.addListener( tab => {
 });
 
 
-// on context menu click
+/**
+ * On text selected/ or item and mouse right-click(context menu) lets:
+ * - get linkUrl in case item is a link or get the selected text
+ * -  
+ */
 chrome.contextMenus.onClicked.addListener((object_info, tab) =>{
 	console.debug('Context Menu cliked: ', object_info);
 
@@ -174,33 +205,38 @@ chrome.contextMenus.onClicked.addListener((object_info, tab) =>{
  * Send request to native app to open video panel
  * @param  {[string]} url
  * @param  {[string]} current video time
- * @return {[type]}
  */
 function openVideoRequest(url, currentTime?){
 
-	let payload = {};
-	let port = NATIVE_APP_PORT;
+	// get media provider like youtube, vimeo
+	const media_provider = getMediaProvider(url);
 
-	payload['video_url'] = url;
+	if(!media_provider){
+		alert('provider not supported..');
+		return;
+	}
 
-	// Get video type
-	payload['video_type'] = getVideoType(url);
-
-	// get video current time
-	if(currentTime) payload['video_currentTime'] = currentTime;
-
+	// get payload for start_player request
+	const payload = getPayload(media_provider, url, currentTime);
 	console.log('Payload to send: ', payload);
 
 	// Make request
-	fetch(`http://localhost:${port}/start_video`,{
+	fetch(`http://localhost:${NATIVE_APP_PORT}/start_player`,{
 		method: 'POST',
 		headers: new Headers({"Content-Type": "application/json"}),
 		body: JSON.stringify(payload)
 	})
 	.then(response =>{
-		if(response.ok){
-			console.info('Video start request sent!');
-		}
+		return response.json()
+	})
+	.then(response_data => {
+
+		console.info('Video start request sent!');
+
+		if(response_data.status != "ok"){
+			alert(response_data.status);	
+		}	
+		
 	})
 	.catch(err => {
 		console.error('Failed to send request to native app: ', err);
@@ -272,6 +308,65 @@ function pingNativeAppServer(){
 //
 //*****************************************************
 
+/**
+ * Given a media provider like youtube or soundcloud, a url & maybe the video's ellapsed time lets:
+ * - build & return payload object 
+ * 
+ * @param {[type]} media_provider [description]
+ * @param {[type]} url            [description]
+ * @param {[type]} currentTime    [description]
+ */
+function getPayload(media_provider, url, currentTime?){
+
+	let payload = {};
+
+	// default - player_type 
+	payload['player_type'] = media_provider;
+
+	switch (media_provider) {
+
+		case "youtube":
+	
+			//  if url is 'short-url' lets replace it with full url
+			payload['video_url'] = url.replace('youtu.be/', 'www.youtube.com/watch?v=');
+			// video time
+			if(currentTime) payload['video_currentTime'] = currentTime;
+
+		break;
+
+
+		case "vimeo":
+			// video url
+			payload['video_url'] = url;
+			// video time
+			if(currentTime) payload['time'] = currentTime;
+		break;
+
+		case "soundcloud":
+			// url
+			payload['url'] = url;
+		break;
+
+		case "twitch":
+			// get player channel
+			let channel_regexp_match = url.match(RegExp('https://go.twitch.tv/([a-zA-Z0-9_]{4,25}$)'));
+			console.log('Channel match regexp:', channel_regexp_match);
+			if(channel_regexp_match) payload['channel_id'] = channel_regexp_match[1];
+
+			// get video id
+			let video_regexp_match = url.match(RegExp('https://go.twitch.tv/videos/(\\d+$)'));
+			console.log('video match regexp:', video_regexp_match);
+			if(video_regexp_match) payload['video_id'] = `v${video_regexp_match[1]}`;
+
+		break;
+		
+	}
+
+	return payload;
+}
+
+
+
 
 /**
  * Save native_app_port to storage
@@ -288,28 +383,35 @@ function setNativeAppPortToStorage(port){
 
 
 /**
- * Will go over supported hostnames array and get the value corresponding to the url
- * @param  {[type]} url
- * @return {[string]}     --> Type of video
+ * Given an url lets:
+ * - go over our supported hosts(eg: youtube, soundcloud)
+ * - if url matches supported host.alt lets return host name
+ * 
+ * @param  url 
+ * @return host name or null
  */
-function getVideoType(url){
+function getMediaProvider(url){
 	console.debug('Get video type of: ', url);
-	let result;
+
+	let result = null;
 
 	// Go over supported hostnames
 	config.SUPPORTED_HOSTNAMES.forEach(host =>{
-		// build reg rexp to match host in url
-		let match_exp = RegExp(`https:\\/\\/(www)?\\.?${host}\\..+`,'g');
-		console.debug('Match RegExp: ', match_exp);
 
-		// execute it
-		let matched_val = url.match(match_exp);
-		console.debug('Match result: ', matched_val);
+		host.alts.forEach(alt =>{
+			// build reg rexp to match host in url
+			let match_exp = RegExp(`https:\\/\\/(www)?\\.?${alt}\\..+`,'g');
+			console.debug('Match RegExp: ', match_exp);
 
-		if(matched_val) return result = host;
+			// execute it
+			let matched_val = url.match(match_exp);
+			console.debug('Match result: ', matched_val);
+
+			if(matched_val) result = host.name;
+
+		})
+
 	});
-
-	if(!result) throw `Video type not found for: ${url}`;
 
 	return result;
 }
