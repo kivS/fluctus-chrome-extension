@@ -208,8 +208,8 @@ chrome.contextMenus.onClicked.addListener((object_info, tab) =>{
  */
 function openVideoRequest(url, currentTime?){
 
-	// get media provider like youtube, vimeo
-	const media_provider = getMediaProvider(url);
+	// get media provider(hostname) like youtube, vimeo
+	const [media_provider] = getMediaProvider(url);
 
 	if(!media_provider){
 		alert('provider not supported..');
@@ -387,8 +387,8 @@ function setNativeAppPortToStorage(port){
  * - go over our supported hosts(eg: youtube, soundcloud)
  * - if url matches supported host.alt lets return host name
  * 
- * @param  url 
- * @return host name or null
+ * @param  url
+ * @return [host name, full matched url] or null
  */
 function getMediaProvider(url){
 	console.debug('Get video type of: ', url);
@@ -400,14 +400,15 @@ function getMediaProvider(url){
 
 		host.alts.forEach(alt =>{
 			// build reg rexp to match host in url
-			let match_exp = RegExp(`https:\\/\\/(www)?\\.?${alt}\\..+`,'g');
+			let match_exp = RegExp(`(?:https:\\/\\/)?(?:www\\.)?${alt}.+`,'g');
+			
 			console.debug('Match RegExp: ', match_exp);
 
 			// execute it
 			let matched_val = url.match(match_exp);
 			console.debug('Match result: ', matched_val);
 
-			if(matched_val) result = host.name;
+			if(matched_val) result = [host.name, matched_val[0]];
 
 		})
 
@@ -432,33 +433,34 @@ function showNoServerErrorMsg(){
 
 
 /**
- * Checks if url is allowed and cleans dirty url(like those from a google search) if there's a need for it
- * @param  {[string]} dirty_url --> Presumable dirty link
- * @return {[string || null]}   --> clean url or if it's not allowed null
+ * Given an url or a text with links, return if supported, the valid url
+ *
+ * @param  url_candidate
+ * @return url_candidate or error msg
  */
-function getCleanedUrl(dirty_url){
-	console.log('Url :', dirty_url);
-
+function getCleanedUrl(url_candidate){
+	
 	// url object
-	let parsed_dirty_url = parseUrl(dirty_url);
+	let url_candidate_obj = parseUrl(url_candidate);
+	console.debug('candidate url :', url_candidate_obj);
 
-	if(isHostnameSupported(parsed_dirty_url.hostname)){
-		console.log(`Hostname: ${parsed_dirty_url.hostname} is supported!`);
-		// If dirty_url is already supported lets return it
-		return dirty_url;
+
+	if(getMediaProvider(url_candidate_obj.hostname)){
+		console.log(`Hostname: ${url_candidate_obj.hostname} is supported!`);
+		// If candidate url is already supported lets return it
+		return url_candidate;
 
 	}else{
-		console.log(`Hostname: ${parsed_dirty_url.hostname} is not supported.. let\s try to retrieve clean  url from it`);
-
-		// Get clean url if its hostname is supported
-		let clean_url;
+		console.log(`Hostname: ${url_candidate_obj.hostname} is not supported.. let\s try to retrieve clean url from it`);
 
 		try{
 
-			clean_url = getSupportedUrlFromDirtyUrl(parsed_dirty_url.search);
+			const [hostname , clean_url_candidate] = getMediaProvider(url_candidate_obj.search);
 
-			// Eat my own tail
-			return getCleanedUrl(clean_url);
+			if(!clean_url_candidate) throw `No match for dirty url: ${url_candidate_obj.search}`;
+
+			// clean url is supported
+			return clean_url_candidate;
 
 		}catch(e){
 			alert(chrome.i18n.getMessage("urlNotSupportedError"));
@@ -480,45 +482,3 @@ function parseUrl(url){
 	return parser;
 }
 
-
-/**
- * Checks if hostname is supported by the program
- * @param  {[string]}  hostname
- * @return {Boolean}
- */
-function isHostnameSupported(hostname){
-	let isIt = null;
-
-	// for each supported hostname config check if it's present in hostname -> (*.host.*) == "www.host.com"
-	isIt = config.SUPPORTED_HOSTNAMES.filter(host => RegExp(`.*\\.?${host}\\..*`).test(hostname) == true);
-
-	return isIt != false;
-}
-
-/**
- * Retrieves supported url from dirty url search param
- * @param  {[string]} url_search --> url search object of dirty url
- * @return {[string]}    --> supported Url
- */
-function getSupportedUrlFromDirtyUrl(url_search){
-	console.log('Dirty url\'s search object: ', url_search);
-
-	let result = null;
-
-	// For each hostname in supported array let's match against url_search and retrieve the url
-	config.SUPPORTED_HOSTNAMES.forEach(host =>{
-
-		let match_exp = RegExp(`https:\\/\\/(www)?\\.?${host}\\..+`,'g');
-		console.log('Match RegExp: ', match_exp);
-
-		let matched_val = url_search.match(match_exp);
-		console.log('Match result: ', matched_val);
-
-		if(matched_val) return result = matched_val[0];
-
-	});
-
-	if(!result) throw `No match for dirty url: ${url_search}`;
-
-	return result;
-}
