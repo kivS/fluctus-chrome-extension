@@ -150,15 +150,13 @@ chrome.pageAction.onClicked.addListener( tab => {
 	}).then(currentTime =>{
 			console.debug('current video time: ', currentTime);
 
-			current_tab = tab;
-
 			if(NATIVE_APP_PORT){
 				// Send POST request to open video with current video time
 				openVideoRequest(tab.url, currentTime);
 
 			}else{
 				// PING NATIVE APP
-				pingNativeAppServer();
+				pingNativeAppServer(tab.url, currentTime);
 
 			}
 
@@ -182,11 +180,9 @@ chrome.contextMenus.onClicked.addListener((object_info, tab) =>{
 	let cleaned_url = getCleanedUrl(parser.href);
 
 	if(cleaned_url){
-		// Set current_tab url
-		current_tab = {url: cleaned_url};
 
 		// Open video request
-		openVideoRequest(cleaned_url);
+		openVideoRequest(cleaned_url, null);
 	}
 
 
@@ -247,7 +243,7 @@ function openVideoRequest(url, currentTime?){
 
 		// Ping server again
 		console.log('Trying to connect again...');
-		pingNativeAppServer();
+		pingNativeAppServer(url, currentTime);
 
 	});
 
@@ -256,10 +252,11 @@ function openVideoRequest(url, currentTime?){
 
 
 /**
- * Ping native app server
- *
+ * Pings app server, selects proper port & resumes previous requests
+ * @param requested_video_url  
+ * @param requested_video_time 
  */
-function pingNativeAppServer(){
+function pingNativeAppServer(requested_video_url, requested_video_time?){
 
 	let ping_urls = config.SUPPORTED_PORTS.map(port =>{
 		return [`http://localhost:${port}/ping`, port];
@@ -289,7 +286,7 @@ function pingNativeAppServer(){
 				setNativeAppPortToStorage(port);
 
 				// Send POST request to open video
-				openVideoRequest(current_tab.url);
+				openVideoRequest(requested_video_url ,requested_video_time);
 
 			}else{
 				// No server found
@@ -436,7 +433,7 @@ function showNoServerErrorMsg(){
  * Given an url or a text with links, return if supported, the valid url
  *
  * @param  url_candidate
- * @return url_candidate or error msg
+ * @return clean_url_candidate or error msg
  */
 function getCleanedUrl(url_candidate){
 	
