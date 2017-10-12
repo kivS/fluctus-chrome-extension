@@ -179,13 +179,19 @@ chrome.contextMenus.onClicked.addListener((object_info, tab) =>{
 	// parser for url
 	let parser = parseUrl(object_info.linkUrl || object_info.selectionText);
 
-	// get 'cleaned' url
-	let cleaned_url = getCleanedUrl(parser.href);
+	try{
+		// get 'cleaned' url & hostname to avoid multiple getMediaProvider calls
+		let [hostname, cleaned_url] = getCleanedUrl(parser.href);
+		
 
-	if(cleaned_url){
+		if(cleaned_url){
 
-		// Open video request
-		openVideoRequest(cleaned_url, null);
+			// Open video request
+			openVideoRequest(cleaned_url, null, hostname);
+		}
+
+	}catch(e){
+		console.log('url not supported.');
 	}
 
 
@@ -203,12 +209,22 @@ chrome.contextMenus.onClicked.addListener((object_info, tab) =>{
 /**
  * Send request to native app to open video panel
  * @param  {[string]} url
- * @param  {[string]} current video time
+ * @param  {[integer]} currentTime(optional)
+ * @param  {[string]} hostname (optional) - from contextMenu
  */
-function openVideoRequest(url, currentTime?){
+function openVideoRequest(url, currentTime?, hostname=null){
 
-	// get media provider(hostname) like youtube, vimeo
-	const [media_provider] = getMediaProvider(url);
+	let media_provider;
+
+	// if request comes from contextMenu avoid multiple calls to getMediaProvider by passing explicit media_provider
+	if(hostname){
+		media_provider = hostname;
+	
+	}else{
+		// get media provider(hostname) like youtube, vimeo
+		[media_provider] = getMediaProvider(url);
+	}
+
 
 	if(!media_provider){
 		alert(chrome.i18n.getMessage('mediaProviderNotSupportedError'));
@@ -439,10 +455,10 @@ function showNoServerErrorMsg(){
 
 
 /**
- * Given an url or a text with links, return if supported, the valid url
+ * Given an url or a text with links, return if supported, the valid url & hostname
  *
  * @param  url_candidate
- * @return clean_url_candidate or error msg
+ * @return clean_url_candidate, hostname or error msg
  */
 function getCleanedUrl(url_candidate){
 	
@@ -450,11 +466,13 @@ function getCleanedUrl(url_candidate){
 	let url_candidate_obj = parseUrl(url_candidate);
 	console.debug('candidate url :', url_candidate_obj);
 
+	const media_provider = getMediaProvider(url_candidate_obj.hostname);
 
-	if(getMediaProvider(url_candidate_obj.hostname)){
+	if(media_provider){
 		console.log(`Hostname: ${url_candidate_obj.hostname} is supported!`);
 		// If candidate url is already supported lets return it
-		return url_candidate;
+		const [hostname] = media_provider;
+		return [hostname, url_candidate];
 
 	}else{
 		console.log(`Hostname: ${url_candidate_obj.hostname} is not supported.. let\s try to retrieve clean url from it`);
@@ -466,7 +484,7 @@ function getCleanedUrl(url_candidate){
 			if(!clean_url_candidate) throw `No match for dirty url: ${url_candidate_obj.search}`;
 
 			// clean url is supported
-			return clean_url_candidate;
+			return [hostname, clean_url_candidate];
 
 		}catch(e){
 			alert(chrome.i18n.getMessage("urlNotSupportedError"));
