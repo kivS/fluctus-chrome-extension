@@ -78,7 +78,7 @@ chrome.runtime.onInstalled.addListener(() =>{
 	chrome.contextMenus.create({
 		id: 'contextMenu_1',
 		title: chrome.i18n.getMessage("titleOnAction"),
-		contexts: ['link', 'selection'],
+		contexts: ['link', 'selection', 'video'],
 		targetUrlPatterns: [
 			// YOUTUBE
 			// For clean urls links like in youtube page and etc
@@ -397,7 +397,7 @@ function getMediaProvider(url){
 
 		host.alts.forEach(alt =>{
 			// build reg rexp to match host in url
-			let match_exp = RegExp(`(?:https:\\/\\/)?(?:www\\.)?${alt}.+`,'g');
+			let match_exp = RegExp(`(?:https:\\/\\/)?(?:www\\.)?${alt}(?:.+)?`,'g');
 			
 			console.debug('Match RegExp: ', match_exp);
 
