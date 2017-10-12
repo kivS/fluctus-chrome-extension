@@ -208,7 +208,7 @@ function openVideoRequest(url, currentTime?){
 	const [media_provider] = getMediaProvider(url);
 
 	if(!media_provider){
-		alert('provider not supported..');
+		alert(chrome.i18n.getMessage('mediaProviderNotSupportedError'));
 		return;
 	}
 
@@ -309,9 +309,9 @@ function pingNativeAppServer(requested_video_url, requested_video_time?){
  * Given a media provider like youtube or soundcloud, a url & maybe the video's ellapsed time lets:
  * - build & return payload object 
  * 
- * @param {[type]} media_provider [description]
- * @param {[type]} url            [description]
- * @param {[type]} currentTime    [description]
+ * @param media_provider 
+ * @param  url            
+ * @param  currentTime   
  */
 function getPayload(media_provider, url, currentTime?){
 

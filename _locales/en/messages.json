@@ -22,5 +22,9 @@
    "urlNotSupportedError": {
     "message": "This url is not supported",
     "description": "Error for when url in selected text(Context menu) is not supported"
+  },
+   "mediaProviderNotSupportedError": {
+    "message": "Media provider not supported",
+    "description": "Error for when media provider(eg: youtube) is not supported by application"
   }
 }
