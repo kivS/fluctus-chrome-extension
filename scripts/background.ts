@@ -78,11 +78,13 @@ chrome.runtime.onInstalled.addListener(() =>{
 	chrome.contextMenus.create({
 		id: 'contextMenu_1',
 		title: chrome.i18n.getMessage("titleOnAction"),
-		contexts: ['link', 'selection', 'video'],
+		contexts: ['link', 'selection'],
 		targetUrlPatterns: [
 			// YOUTUBE
 			// For clean urls links like in youtube page and etc
 			'https://www.youtube.com/watch*',
+			// for short url
+			'https://youtu.be/*',
 			// For dirty urls like in google search results..dirty..
 			`https://*/*${encodeURIComponent('www.youtube.com/watch')}*`,
 
@@ -97,7 +99,8 @@ chrome.runtime.onInstalled.addListener(() =>{
 			`https://*/*${encodeURIComponent('soundcloud')}*`,
 
 			// TWITCH
-			'https://*.twitch.tv/*',
+			'https://go.twitch.tv/videos/*',
+			'https://go.twitch.tv/*',
 			// For dirty urls like in google search results..dirty..
 			`https://*/*${encodeURIComponent('twitch')}*`,
 		]
@@ -215,6 +218,12 @@ function openVideoRequest(url, currentTime?){
 	// get payload for start_player request
 	const payload = getPayload(media_provider, url, currentTime);
 	console.log('Payload to send: ', payload);
+
+	// make sure payload has at least player_type and one more arg like the url of the request
+	if(Object.keys(payload).length <= 1){
+		alert(chrome.i18n.getMessage('urlNotSupportedError'));
+		return;
+	}
 
 	// Make request
 	fetch(`http://localhost:${NATIVE_APP_PORT}/start_player`,{
