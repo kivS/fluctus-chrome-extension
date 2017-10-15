@@ -327,6 +327,8 @@ function pingNativeAppServer(requested_video_url, requested_video_time?){
 					}
 				})
 				.catch(error =>{
+					// No server found
+					alertUser('', chrome.i18n.getMessage("noAppAtPortError", ping_url[1].toString()) );
 					console.warn(`No one behind port ${ping_url[1]}!`);
 					resolve('nope');
 				})
