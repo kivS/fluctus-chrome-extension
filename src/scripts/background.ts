@@ -286,7 +286,7 @@ function openVideoRequest(url, currentTime?, hostname=null){
 		
 	})
 	.catch(err => {
-		console.error('Failed to send request to native app: ', err);
+		console.debug('Failed to send request to native app: ', err);
 
 		// If request fails let's reset default native app port, that way we'll have to ping for new port
 		NATIVE_APP_PORT = null;
@@ -351,7 +351,8 @@ function pingNativeAppServer(requested_video_url, requested_video_time?){
 
 
 
-
+//*****************************************************
+//
 //			   Helper functions
 //
 //*****************************************************
