@@ -335,7 +335,7 @@ function pingNativeAppServer(requested_video_url, requested_video_time?){
 
 	}))
 	.then(responses =>{
-		console.log('responses:', responses);
+		console.log('Companion app not found!');
 
 		// No server found
 		alertUser(NO_SERVER_ERROR_NOTIF_ID, chrome.i18n.getMessage("noServerError"));
