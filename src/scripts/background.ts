@@ -1,4 +1,4 @@
-console.log('Lift off of the Background!!');
+console.log('Lift off!');
 
 // Define config constant
 const config = {
@@ -26,7 +26,35 @@ const config = {
 }
 
 let NATIVE_APP_PORT = null;
-let current_tab = null;
+const NO_SERVER_ERROR_NOTIF_ID = "fluctus_says_nope";
+
+
+// get native app default port from storage if not get default one from config
+chrome.storage.sync.get(config.STORAGE_KEY_NATIVE_APP_PORT, result =>{
+
+	// get port
+	NATIVE_APP_PORT = result[config.STORAGE_KEY_NATIVE_APP_PORT];
+
+	if(!NATIVE_APP_PORT){
+		// Set last value of supported ports array as default
+		NATIVE_APP_PORT = config.SUPPORTED_PORTS[config.SUPPORTED_PORTS.length-1];
+
+		// Save to storage
+		setNativeAppPortToStorage(NATIVE_APP_PORT);
+	}
+
+	console.log('Using default native port:', NATIVE_APP_PORT);
+
+});
+
+
+
+
+
+//*****************************************************
+//               Events
+//
+//*****************************************************
 
 // On install or upgrade
 chrome.runtime.onInstalled.addListener(() =>{
@@ -111,25 +139,6 @@ chrome.runtime.onInstalled.addListener(() =>{
 
 
 
-// get native app default port from storage if not get default one from config
-chrome.storage.sync.get(config.STORAGE_KEY_NATIVE_APP_PORT, result =>{
-
-	// get port
-	NATIVE_APP_PORT = result[config.STORAGE_KEY_NATIVE_APP_PORT];
-
-	if(!NATIVE_APP_PORT){
-		// Set last value of supported ports array as default
-		NATIVE_APP_PORT = config.SUPPORTED_PORTS[config.SUPPORTED_PORTS.length-1];
-
-		// Save to storage
-		setNativeAppPortToStorage(NATIVE_APP_PORT);
-	}
-
-	console.log('Using default native port:', NATIVE_APP_PORT);
-
-});
-
-
 
 /**
  * On btn press lets: 
@@ -200,6 +209,23 @@ chrome.contextMenus.onClicked.addListener((object_info, tab) =>{
 
 
 
+/**
+ * Handle notifications click event
+ */
+chrome.notifications.onClicked.addListener(notif =>{
+    console.log('notification clicked:', notif);
+
+    switch (notif) {
+        case NO_SERVER_ERROR_NOTIF_ID:
+            chrome.tabs.create({ url: config.NATIVE_APP_INSTALL_URL });
+            break;        
+    }
+
+    // clear notification
+    chrome.notifications.clear(notif);
+})
+
+
 
 
 //*****************************************************
@@ -227,7 +253,7 @@ function openVideoRequest(url, currentTime?, hostname=null){
 
 
 	if(!media_provider){
-		alert(chrome.i18n.getMessage('mediaProviderNotSupportedError'));
+		alertUser("", chrome.i18n.getMessage('mediaProviderNotSupportedError'));
 		return;
 	}
 
@@ -237,7 +263,7 @@ function openVideoRequest(url, currentTime?, hostname=null){
 
 	// make sure payload has at least player_type and one more arg like the url of the request
 	if(Object.keys(payload).length <= 1){
-		alert(chrome.i18n.getMessage('urlNotSupportedError'));
+		alertUser("", chrome.i18n.getMessage('urlNotSupportedError'));
 		return;
 	}
 
@@ -255,7 +281,7 @@ function openVideoRequest(url, currentTime?, hostname=null){
 		console.info('Video start request sent!');
 
 		if(response_data.status != "ok"){
-			alert(response_data.status);	
+			alertUser("", response_data.status);	
 		}	
 		
 	})
@@ -315,7 +341,7 @@ function pingNativeAppServer(requested_video_url, requested_video_time?){
 
 			}else{
 				// No server found
-				showNoServerErrorMsg();
+				 alertUser(NO_SERVER_ERROR_NOTIF_ID, chrome.i18n.getMessage("noServerError"));
 			}
 		})
 		.catch(err =>{
@@ -391,20 +417,6 @@ function getPayload(media_provider, url, currentTime?){
 
 
 /**
- * Save native_app_port to storage
- * @param  {[string]} port
- */
-function setNativeAppPortToStorage(port){
-	const objToStore = {};
-
-	objToStore[config.STORAGE_KEY_NATIVE_APP_PORT] = port;
-
-	chrome.storage.sync.set(objToStore);
-
-}
-
-
-/**
  * Given an url lets:
  * - go over our supported hosts(eg: youtube, soundcloud)
  * - if url matches supported host.alt lets return host name
@@ -441,19 +453,6 @@ function getMediaProvider(url){
 
 
 
-
-/**
- * Shows dialog to user if server is not alive
- * and lets link to download page for the native app
- *
- */
-function showNoServerErrorMsg(){
-	if(confirm(chrome.i18n.getMessage("noServerError"))){
-		chrome.tabs.create({ url: config.NATIVE_APP_INSTALL_URL });
-	}
-}
-
-
 /**
  * Given an url or a text with links, return if supported, the valid url & hostname
  *
@@ -487,7 +486,7 @@ function getCleanedUrl(url_candidate){
 			return [hostname, clean_url_candidate];
 
 		}catch(e){
-			alert(chrome.i18n.getMessage("urlNotSupportedError"));
+			alertUser("", chrome.i18n.getMessage("urlNotSupportedError"));
 		}
 	}
 
@@ -506,3 +505,44 @@ function parseUrl(url){
 	return parser;
 }
 
+
+/**
+ * Save native_app_port to storage
+ * @param  {[string]} port
+ */
+function setNativeAppPortToStorage(port){
+	const objToStore = {};
+
+	objToStore[config.STORAGE_KEY_NATIVE_APP_PORT] = port;
+
+	chrome.storage.sync.set(objToStore);
+
+}
+
+
+/**
+ * Send notification to the user
+ * @param  notification_id 
+ * @param  message        
+ */
+function alertUser(notification_id, message){
+    chrome.notifications.create(notification_id, {
+       "type": "basic",
+       "iconUrl": chrome.extension.getURL("icons/icon-64.png"),
+       "title": "Fluctus",
+       "message": message
+
+    }, notif =>{
+    	console.log('Created notification:', notif);
+
+    	// for no server error, the user should have time!
+    	if(notif == NO_SERVER_ERROR_NOTIF_ID) return;
+
+    	// automatically clear notification after 2.5 seconds
+    	const autoClearTimeOut = setTimeout(() =>{
+    	    chrome.notifications.clear(notif);
+    	    clearTimeout(autoClearTimeOut);
+    	}, 2500)
+
+    });
+}

@@ -21,7 +21,8 @@
     "http://localhost/*",
     "tabs",
     "contextMenus",
-    "storage"
+    "storage",
+    "notifications"
   ],
 
   "page_action": {
